@@ -3,72 +3,72 @@ import pandas as pd
 import numpy as np
 import os
 
-def calculate(matrix, weights, impacts):
-    matrix = np.array(matrix)
-    normalized_matrix = matrix / np.sqrt((matrix**2).sum(axis=0))
-    weighted_matrix = normalized_matrix * weights
+def topsis_calculation(data_matrix, weight_vector, impact_vector):
+    data_matrix = np.array(data_matrix)
+    norm_matrix = data_matrix / np.sqrt((data_matrix**2).sum(axis=0))
+    weighted_matrix = norm_matrix * weight_vector
 
-    ideal_solution = np.where(impacts == +1, np.max(weighted_matrix, axis=0), np.min(weighted_matrix, axis=0))
-    negative_ideal_solution = np.where(impacts == +1, np.min(weighted_matrix, axis=0), np.max(weighted_matrix, axis=0))
+    ideal_best = np.where(impact_vector == 1, np.max(weighted_matrix, axis=0), np.min(weighted_matrix, axis=0))
+    ideal_worst = np.where(impact_vector == 1, np.min(weighted_matrix, axis=0), np.max(weighted_matrix, axis=0))
 
-    distance_to_ideal = np.sqrt(((weighted_matrix - ideal_solution)**2).sum(axis=1))
-    distance_to_negative_ideal = np.sqrt(((weighted_matrix - negative_ideal_solution)**2).sum(axis=1))
+    distance_best = np.sqrt(((weighted_matrix - ideal_best)**2).sum(axis=1))
+    distance_worst = np.sqrt(((weighted_matrix - ideal_worst)**2).sum(axis=1))
 
-    scores = distance_to_negative_ideal / (distance_to_ideal + distance_to_negative_ideal)
-    rankings = scores.argsort()[::-1] + 1
-    return scores, rankings
+    performance_scores = distance_worst / (distance_best + distance_worst)
+    rankings = performance_scores.argsort()[::-1] + 1
+    return performance_scores, rankings
 
 def main():
     if len(sys.argv) != 5:
         print("Usage: python 102253003.py <InputDataSet.csv> <Weights> <Impacts> <Result.csv>")
         sys.exit(1)
 
-    input_file = sys.argv[1]
-    weights = sys.argv[2]
-    impacts = sys.argv[3]
-    result_file = sys.argv[4]
+    input_path = sys.argv[1]
+    weight_input = sys.argv[2]
+    impact_input = sys.argv[3]
+    output_path = sys.argv[4]
 
-    if not os.path.exists(input_file):
-        print(f"Error: File '{input_file}' not found.")
+    if not os.path.isfile(input_path):
+        print(f"Error: File '{input_path}' not found.")
         sys.exit(1)
 
     try:
-        data = pd.read_csv(input_file)
-        if data.shape[1] < 3:
-            print("Error: Input file must contain at least three columns.")
+        dataset = pd.read_csv(input_path)
+        if dataset.shape[1] < 3:
+            print("Error: Input file must have at least three columns.")
             sys.exit(1)
-        matrix = data.iloc[:, 1:].values
-    except Exception as e:
-        print(f"Error reading input file: {e}")
+        criteria_matrix = dataset.iloc[:, 1:].values
+    except Exception as err:
+        print(f"Error reading the input file: {err}")
         sys.exit(1)
 
     try:
-        weights = list(map(float, weights.split(',')))
-        impacts = list(map(float, impacts.split(',')))
-        if not all(impact in [+1, -1] for impact in impacts):
-            print("Error: Impacts must be +1 (benefit) or -1 (cost).")
+        weight_list = list(map(float, weight_input.split(',')))
+        impact_list = list(map(float, impact_input.split(',')))
+        if not all(impact in [1, -1] for impact in impact_list):
+            print("Error: Impacts must be 1 (benefit) or -1 (cost).")
             sys.exit(1)
     except ValueError:
-        print("Error: Weights must be numeric values and impacts must be +1 or -1, separated by commas.")
+        print("Error: Weights must be numbers and impacts must be 1 or -1, separated by commas.")
         sys.exit(1)
 
-    if len(weights) != matrix.shape[1] or len(impacts) != matrix.shape[1]:
-        print("Error: Length of weights and impacts must match the number of criteria.")
+    if len(weight_list) != criteria_matrix.shape[1] or len(impact_list) != criteria_matrix.shape[1]:
+        print("Error: Number of weights and impacts must match the number of criteria.")
         sys.exit(1)
 
-    if not np.issubdtype(matrix.dtype, np.number):
-        print("Error: All criteria columns must contain numeric values only.")
+    if not np.issubdtype(criteria_matrix.dtype, np.number):
+        print("Error: Criteria columns must contain only numeric values.")
         sys.exit(1)
 
-    scores, rankings = calculate(matrix, np.array(weights), np.array(impacts))
+    scores, ranks = topsis_calculation(criteria_matrix, np.array(weight_list), np.array(impact_list))
 
     try:
-        data["Score"] = scores
-        data["Rank"] = rankings
-        data.to_csv(result_file, index=False)
-        print(f"Results saved to {result_file}")
-    except Exception as e:
-        print(f"Error writing results to file: {e}")
+        dataset["Score"] = scores
+        dataset["Rank"] = ranks
+        dataset.to_csv(output_path, index=False)
+        print(f"Results successfully saved to {output_path}")
+    except Exception as err:
+        print(f"Error writing results to file: {err}")
         sys.exit(1)
 
 if __name__ == "__main__":
