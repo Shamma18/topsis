@@ -27,10 +27,6 @@ This project provides an implementation of the **Technique for Order Preference 
 - **Impacts**: Define whether each attribute is a benefit (`1`) or a cost (`0`) (e.g., `[1, 0, 1, 1, 0]`).
 - **Output File**: A CSV file with calculated TOPSIS scores and rankings.
 
-## Input Dataset Example
-
-![Input Dataset Example](images/ss1.png)
-
 ### Example Weights
 ```text
 [1, 1, 1, 1, 1]
@@ -50,8 +46,6 @@ The resulting file includes:
 - Original data
 - Calculated TOPSIS scores
 - Rankings based on the scores
-
-![Output Example](images/ss2.png)
 
 ## Additional Resources
 
